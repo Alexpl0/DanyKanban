@@ -511,14 +511,20 @@ if ('serviceWorker' in navigator) {
             .then(function(registration) {
                 console.log('SW registered: ', registration);
                 
-                // Verificar actualizaciones cada vez que se carga la página
+                // Forzar verificación de actualizaciones
+                registration.update();
+                
                 registration.addEventListener('updatefound', () => {
                     const newWorker = registration.installing;
                     newWorker.addEventListener('statechange', () => {
-                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                            // Hay una nueva versión disponible
-                            if (confirm('Nueva versión disponible. ¿Deseas actualizar?')) {
+                        if (newWorker.state === 'installed') {
+                            if (navigator.serviceWorker.controller) {
+                                // Nueva versión disponible - forzar recarga
+                                console.log('Nueva versión detectada, recargando...');
                                 window.location.reload();
+                            } else {
+                                // Primera instalación
+                                console.log('Contenido cacheado por primera vez');
                             }
                         }
                     });
@@ -528,6 +534,15 @@ if ('serviceWorker' in navigator) {
                 console.log('SW registration failed: ', registrationError);
             });
     });
+
+    // Verificar actualizaciones periódicamente
+    setInterval(() => {
+        if (navigator.serviceWorker.controller) {
+            navigator.serviceWorker.getRegistration().then(reg => {
+                if (reg) reg.update();
+            });
+        }
+    }, 60000); // Cada minuto
 }
 
 // ===== PWA INSTALL PROMPT =====
@@ -562,3 +577,31 @@ function installApp() {
         });
     }
 }
+
+// ===== FORCE CACHE CLEAR (Para desarrollo) =====
+function clearAllCaches() {
+    if ('caches' in window) {
+        caches.keys().then(names => {
+            names.forEach(name => {
+                caches.delete(name);
+            });
+        });
+    }
+    
+    // Limpiar localStorage también
+    localStorage.clear();
+    
+    // Desregistrar service worker
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(registrations => {
+            registrations.forEach(registration => {
+                registration.unregister();
+            });
+        });
+    }
+    
+    // Recargar página
+    window.location.reload(true);
+}
+
+// Llamar esta función en consola si es necesario: clearAllCaches()
