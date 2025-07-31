@@ -54,6 +54,24 @@ function setupEventListeners() {
     });
 }
 
+// ===== HELPER FUNCTIONS =====
+function formatDate(dateString) {
+    if (!dateString) return '';
+    // The input is 'YYYY-MM-DD', which JS interprets as UTC.
+    // To avoid timezone issues where the date might shift back a day,
+    // we adjust for the user's timezone offset.
+    const date = new Date(dateString);
+    const userTimezoneOffset = date.getTimezoneOffset() * 60000;
+    const adjustedDate = new Date(date.getTime() + userTimezoneOffset);
+
+    const day = String(adjustedDate.getDate()).padStart(2, '0');
+    const month = String(adjustedDate.getMonth() + 1).padStart(2, '0'); // Month is 0-indexed
+    const year = adjustedDate.getFullYear();
+    
+    return `${day}/${month}/${year}`;
+}
+
+
 // ===== AUTHENTICATION =====
 function handleLogin(e) {
     e.preventDefault();
@@ -131,7 +149,7 @@ function loadProjects() {
             <p>${project.description}</p>
             <div class="project-meta">
                 <span>📋 ${projectTasks.length} tareas</span>
-                <span>📅 ${project.createdAt}</span>
+                <span>📅 ${formatDate(project.createdAt)}</span>
             </div>
         `;
         
@@ -173,7 +191,7 @@ function loadKanbanBoard() {
 
 function createTaskCard(task) {
     const dueDateDisplay = task.dueDate ? 
-        `📅 ${new Date(task.dueDate).toLocaleDateString()}` : '';
+        `📅 ${formatDate(task.dueDate)}` : '';
     
     const completedClass = task.completed ? 'completed' : '';
     const checkboxClass = task.completed ? 'checked' : '';
@@ -232,7 +250,6 @@ function moveTask(taskId, newPhase) {
 function openProjectModal() {
     document.getElementById('modalTitle').textContent = 'Nuevo Proyecto';
 
-    // Verificar si el elemento phaseGroup existe antes de manipularlo
     const phaseGroup = document.getElementById('phaseGroup');
     if (phaseGroup) {
         phaseGroup.style.display = 'none';
@@ -246,7 +263,6 @@ function openProjectModal() {
     document.getElementById('taskTitle').placeholder = 'Nombre del proyecto';
     document.getElementById('taskDescription').placeholder = 'Descripción del proyecto';
 
-    // Cambiar el texto del campo de fecha
     const dueDateLabel = document.querySelector('label[for="taskDueDate"]');
     if (dueDateLabel) {
         dueDateLabel.textContent = 'Fecha de Entrega del Proyecto';
@@ -261,8 +277,12 @@ function openTaskModal(phase = 0, taskId = null) {
     const task = isEdit ? tasks.find(t => t.id === taskId) : null;
 
     document.getElementById('modalTitle').textContent = isEdit ? 'Editar Tarea' : 'Nueva Tarea';
+    
+    const phaseGroup = document.getElementById('phaseGroup');
+    if (phaseGroup) {
+        phaseGroup.style.display = 'block';
+    }
 
-    // Verificar si los elementos existen antes de manipularlos
     const taskTitle = document.getElementById('taskTitle');
     const taskDescription = document.getElementById('taskDescription');
     const taskPhase = document.getElementById('taskPhase');
@@ -403,15 +423,15 @@ function initializeSampleData() {
             name: "Sistema de Inventario",
             description: "Desarrollo de aplicación web para gestión de inventario en tiempo real",
             createdAt: "2025-06-01",
-            dueDate: "2025-08-01",
+            dueDate: "2025-09-01",
             managerId: 1
         },
         {
             id: 2,
             name: "App Móvil E-commerce",
             description: "Aplicación móvil para tienda online con funciones de carrito y pagos",
-            createdAt: "2025-05-15",
-            dueDate: "2025-07-30",
+            createdAt: "2025-07-15",
+            dueDate: "2025-10-30",
             managerId: 1
         }
     ];
@@ -438,6 +458,28 @@ function initializeSampleData() {
             completed: false,
             createdAt: "2025-06-10",
             updatedAt: "2025-06-10"
+        },
+        {
+            id: 3,
+            projectId: 1,
+            title: "Desarrollo del Backend",
+            description: "Implementar la API REST para el inventario",
+            phase: 3,
+            dueDate: "2025-08-15",
+            completed: false,
+            createdAt: "2025-07-20",
+            updatedAt: "2025-07-20"
+        },
+        {
+            id: 4,
+            projectId: 2,
+            title: "Diseño de UI/UX",
+            description: "Crear los mockups y prototipos para la app móvil",
+            phase: 2,
+            dueDate: "2025-08-10",
+            completed: false,
+            createdAt: "2025-07-25",
+            updatedAt: "2025-07-25"
         }
     ];
 
