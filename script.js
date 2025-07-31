@@ -388,10 +388,14 @@ function formatDate(dateString) {
 // ===== AUTHENTICATION =====
 function handleLogin(e) {
     e.preventDefault();
+    e.stopPropagation();
+    
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
     
-    // Simple auth check (you can make this more robust)
+    console.log('Login attempt:', email); // Para debug
+    
+    // Simple auth check (es solo frontend, cualquier email/password funciona)
     if (email && password) {
         currentUser = {
             id: 1,
@@ -403,6 +407,8 @@ function handleLogin(e) {
         localStorage.setItem('kanban_user', JSON.stringify(currentUser));
         showDashboard();
     }
+    
+    return false; // Importante: prevenir el submit del form
 }
 
 function logout() {
