@@ -510,6 +510,19 @@ if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('./sw.js')
             .then(function(registration) {
                 console.log('SW registered: ', registration);
+                
+                // Verificar actualizaciones cada vez que se carga la página
+                registration.addEventListener('updatefound', () => {
+                    const newWorker = registration.installing;
+                    newWorker.addEventListener('statechange', () => {
+                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            // Hay una nueva versión disponible
+                            if (confirm('Nueva versión disponible. ¿Deseas actualizar?')) {
+                                window.location.reload();
+                            }
+                        }
+                    });
+                });
             })
             .catch(function(registrationError) {
                 console.log('SW registration failed: ', registrationError);
