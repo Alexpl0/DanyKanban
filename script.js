@@ -16,8 +16,140 @@ const phases = [
     { id: 6, name: 'Completado', class: 'completed' }
 ];
 
+// ===== VERSION CHECK AND FORCED UPDATE =====
+const APP_VERSION = '1.2.0'; // Incrementa esto cada vez que quieras forzar actualización
+const VERSION_KEY = 'kanban_app_version';
+
+function checkAppVersion() {
+    const savedVersion = localStorage.getItem(VERSION_KEY);
+    
+    if (savedVersion !== APP_VERSION) {
+        showUpdateModal();
+        return false;
+    }
+    return true;
+}
+
+function showUpdateModal() {
+    // Crear modal de actualización
+    const updateModal = document.createElement('div');
+    updateModal.id = 'updateModal';
+    updateModal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 10000;
+        backdrop-filter: blur(5px);
+    `;
+    
+    updateModal.innerHTML = `
+        <div style="
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            max-width: 400px;
+            margin: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        ">
+            <div style="font-size: 50px; margin-bottom: 20px;">🔄</div>
+            <h2 style="color: #1D837F; margin-bottom: 15px;">Nueva Versión Disponible</h2>
+            <p style="margin-bottom: 25px; color: #666; line-height: 1.5;">
+                Hemos detectado una nueva versión de la aplicación con mejoras importantes. 
+                <br><br>
+                <strong>Es necesario actualizar para continuar.</strong>
+            </p>
+            <button id="updateBtn" style="
+                background: #1D837F;
+                color: white;
+                border: none;
+                padding: 12px 30px;
+                border-radius: 8px;
+                font-size: 16px;
+                cursor: pointer;
+                width: 100%;
+                transition: background 0.3s;
+            " onmouseover="this.style.background='#15625f'" onmouseout="this.style.background='#1D837F'">
+                🚀 Actualizar Ahora
+            </button>
+            <p style="font-size: 12px; color: #999; margin-top: 15px;">
+                Versión actual: ${APP_VERSION}
+            </p>
+        </div>
+    `;
+    
+    document.body.appendChild(updateModal);
+    
+    // Manejar click de actualización
+    document.getElementById('updateBtn').addEventListener('click', function() {
+        forceAppUpdate();
+    });
+    
+    // Prevenir cerrar el modal clickeando fuera
+    updateModal.addEventListener('click', function(e) {
+        e.stopPropagation();
+    });
+}
+
+function forceAppUpdate() {
+    // Mostrar loading
+    const updateBtn = document.getElementById('updateBtn');
+    updateBtn.innerHTML = '⏳ Actualizando...';
+    updateBtn.disabled = true;
+    
+    // Limpiar todo y forzar actualización
+    setTimeout(() => {
+        // Limpiar localStorage pero mantener usuario logueado
+        const currentUser = localStorage.getItem('kanban_user');
+        
+        // Limpiar todo
+        localStorage.clear();
+        
+        // Restaurar usuario
+        if (currentUser) {
+            localStorage.setItem('kanban_user', currentUser);
+        }
+        
+        // Establecer nueva versión
+        localStorage.setItem(VERSION_KEY, APP_VERSION);
+        
+        // Limpiar caché
+        if ('caches' in window) {
+            caches.keys().then(names => {
+                names.forEach(name => {
+                    caches.delete(name);
+                });
+            });
+        }
+        
+        // Desregistrar service worker y recargar
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(registrations => {
+                registrations.forEach(registration => {
+                    registration.unregister();
+                });
+                // Recargar después de desregistrar
+                window.location.reload(true);
+            });
+        } else {
+            window.location.reload(true);
+        }
+    }, 1500);
+}
+
 // ===== INITIALIZATION =====
 document.addEventListener('DOMContentLoaded', function() {
+    // Verificar versión ANTES de hacer cualquier otra cosa
+    if (!checkAppVersion()) {
+        return; // Si necesita actualizar, no continuar con la inicialización
+    }
+    
     loadFromStorage();
     initializeApp();
 });
@@ -515,21 +647,6 @@ function loadFromStorage() {
     
     if (savedProjects) {
         projects = JSON.parse(savedProjects);
-        
-        // Detectar datos viejos y actualizarlos automáticamente
-        const hasOldData = projects.some(p => 
-            p.createdAt && (p.createdAt.includes('2025-06') || p.createdAt.includes('2025-07'))
-        );
-        
-        if (hasOldData) {
-            console.log('Detectados datos de ejemplo viejos, actualizando...');
-            projects = [];
-            tasks = [];
-            localStorage.removeItem('kanban_projects');
-            localStorage.removeItem('kanban_tasks');
-            initializeSampleData();
-            return;
-        }
     }
     
     if (savedTasks) {
