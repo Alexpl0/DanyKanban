@@ -417,24 +417,42 @@ function updateProgressBars() {
 
 // ===== DATA MANAGEMENT =====
 function initializeSampleData() {
+    const today = new Date();
+    const currentYear = today.getFullYear();
+    const currentMonth = String(today.getMonth() + 1).padStart(2, '0');
+    const currentDay = String(today.getDate()).padStart(2, '0');
+    const todayStr = `${currentYear}-${currentMonth}-${currentDay}`;
+    
+    // Fechas dinámicas
+    const startDate1 = new Date(today.getTime() - (30 * 24 * 60 * 60 * 1000)); // 30 días atrás
+    const endDate1 = new Date(today.getTime() + (60 * 24 * 60 * 60 * 1000));   // 60 días adelante
+    const startDate2 = new Date(today.getTime() - (15 * 24 * 60 * 60 * 1000)); // 15 días atrás
+    const endDate2 = new Date(today.getTime() + (90 * 24 * 60 * 60 * 1000));   // 90 días adelante
+    
     projects = [
         {
             id: 1,
             name: "Sistema de Inventario",
             description: "Desarrollo de aplicación web para gestión de inventario en tiempo real",
-            createdAt: "2025-06-01",
-            dueDate: "2025-09-01",
+            createdAt: startDate1.toISOString().split('T')[0],
+            dueDate: endDate1.toISOString().split('T')[0],
             managerId: 1
         },
         {
             id: 2,
             name: "App Móvil E-commerce",
             description: "Aplicación móvil para tienda online con funciones de carrito y pagos",
-            createdAt: "2025-07-15",
-            dueDate: "2025-10-30",
+            createdAt: startDate2.toISOString().split('T')[0],
+            dueDate: endDate2.toISOString().split('T')[0],
             managerId: 1
         }
     ];
+
+    // Fechas dinámicas para tareas
+    const task1Date = new Date(today.getTime() - (20 * 24 * 60 * 60 * 1000));
+    const task2Date = new Date(today.getTime() + (10 * 24 * 60 * 60 * 1000));
+    const task3Date = new Date(today.getTime() + (30 * 24 * 60 * 60 * 1000));
+    const task4Date = new Date(today.getTime() + (25 * 24 * 60 * 60 * 1000));
 
     tasks = [
         {
@@ -443,10 +461,10 @@ function initializeSampleData() {
             title: "Análisis de Requerimientos",
             description: "Definir funcionalidades principales del sistema de inventario",
             phase: 1,
-            dueDate: "2025-06-15",
+            dueDate: task1Date.toISOString().split('T')[0],
             completed: true,
-            createdAt: "2025-06-01",
-            updatedAt: "2025-06-01"
+            createdAt: startDate1.toISOString().split('T')[0],
+            updatedAt: startDate1.toISOString().split('T')[0]
         },
         {
             id: 2,
@@ -454,10 +472,10 @@ function initializeSampleData() {
             title: "Diseño de Base de Datos",
             description: "Crear esquema de BD para productos, categorías y movimientos",
             phase: 2,
-            dueDate: "2025-06-25",
+            dueDate: task2Date.toISOString().split('T')[0],
             completed: false,
-            createdAt: "2025-06-10",
-            updatedAt: "2025-06-10"
+            createdAt: startDate1.toISOString().split('T')[0],
+            updatedAt: startDate1.toISOString().split('T')[0]
         },
         {
             id: 3,
@@ -465,10 +483,10 @@ function initializeSampleData() {
             title: "Desarrollo del Backend",
             description: "Implementar la API REST para el inventario",
             phase: 3,
-            dueDate: "2025-08-15",
+            dueDate: task3Date.toISOString().split('T')[0],
             completed: false,
-            createdAt: "2025-07-20",
-            updatedAt: "2025-07-20"
+            createdAt: startDate1.toISOString().split('T')[0],
+            updatedAt: startDate1.toISOString().split('T')[0]
         },
         {
             id: 4,
@@ -476,10 +494,10 @@ function initializeSampleData() {
             title: "Diseño de UI/UX",
             description: "Crear los mockups y prototipos para la app móvil",
             phase: 2,
-            dueDate: "2025-08-10",
+            dueDate: task4Date.toISOString().split('T')[0],
             completed: false,
-            createdAt: "2025-07-25",
-            updatedAt: "2025-07-25"
+            createdAt: startDate2.toISOString().split('T')[0],
+            updatedAt: startDate2.toISOString().split('T')[0]
         }
     ];
 
@@ -497,6 +515,21 @@ function loadFromStorage() {
     
     if (savedProjects) {
         projects = JSON.parse(savedProjects);
+        
+        // Detectar datos viejos y actualizarlos automáticamente
+        const hasOldData = projects.some(p => 
+            p.createdAt && (p.createdAt.includes('2025-06') || p.createdAt.includes('2025-07'))
+        );
+        
+        if (hasOldData) {
+            console.log('Detectados datos de ejemplo viejos, actualizando...');
+            projects = [];
+            tasks = [];
+            localStorage.removeItem('kanban_projects');
+            localStorage.removeItem('kanban_tasks');
+            initializeSampleData();
+            return;
+        }
     }
     
     if (savedTasks) {
@@ -604,4 +637,17 @@ function clearAllCaches() {
     window.location.reload(true);
 }
 
-// Llamar esta función en consola si es necesario: clearAllCaches()
+// Nueva función para forzar datos frescos
+function resetSampleData() {
+    localStorage.removeItem('kanban_projects');
+    localStorage.removeItem('kanban_tasks');
+    projects = [];
+    tasks = [];
+    initializeSampleData();
+    if (document.getElementById('dashboard').style.display === 'block') {
+        loadProjects();
+    }
+    if (document.getElementById('kanbanView').style.display === 'block') {
+        loadKanbanBoard();
+    }
+}
