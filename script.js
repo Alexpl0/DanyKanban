@@ -17,16 +17,24 @@ const phases = [
 ];
 
 // ===== VERSION CHECK AND FORCED UPDATE =====
-const APP_VERSION = '1.2.1'; // Incrementa esto cada vez que quieras forzar actualización
+const APP_VERSION = '1.3.0'; // Incrementa esto cada vez que quieras forzar actualización
 const VERSION_KEY = 'kanban_app_version';
 
 function checkAppVersion() {
     const savedVersion = localStorage.getItem(VERSION_KEY);
     
+    // Si no hay versión guardada (usuario nuevo), establecer la versión actual
+    if (!savedVersion) {
+        localStorage.setItem(VERSION_KEY, APP_VERSION);
+        return true; // Permitir continuar normalmente
+    }
+    
+    // Solo mostrar modal si hay una versión diferente (actualización necesaria)
     if (savedVersion !== APP_VERSION) {
         showUpdateModal();
         return false;
     }
+    
     return true;
 }
 
@@ -334,7 +342,7 @@ function initializeApp() {
         currentUser = JSON.parse(savedUser);
         showDashboard();
     } else {
-        showLogin();
+        showLogin(); // Mostrar login para usuarios nuevos
     }
 
     // Initialize sample data if empty

@@ -69,27 +69,21 @@
                 <div class="progress-section">
                     <div class="progress-bar-container">
                         <div class="progress-label">
-                            <span>📋 Progreso de Tareas</span>
-                            <span id="taskProgress">0%</span>
+                            Progreso de Tareas: <span id="taskProgress">0%</span>
                         </div>
                         <div class="progress-bar">
-                            <div class="progress-fill task-progress" id="taskProgressBar"></div>
+                            <div class="progress-fill" id="taskProgressBar"></div>
                         </div>
                     </div>
                     <div class="progress-bar-container">
                         <div class="progress-label">
-                            <span>⏰ Tiempo Transcurrido</span>
-                            <span id="timeProgress">0%</span>
+                            Progreso de Tiempo: <span id="timeProgress">0%</span>
                         </div>
                         <div class="progress-bar">
-                            <div class="progress-fill time-progress" id="timeProgressBar"></div>
+                            <div class="progress-fill" id="timeProgressBar"></div>
                         </div>
                     </div>
                 </div>
-            </div>
-            <div class="user-info">
-                <div class="user-avatar">A</div>
-                <button class="logout-btn" onclick="logout()">Cerrar Sesión</button>
             </div>
         </header>
         <div class="kanban-board" id="kanbanBoard">
@@ -101,7 +95,7 @@
     <div id="modal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 class="modal-title" id="modalTitle">Nueva Tarea</h2>
+                <h2 id="modalTitle">Nueva Tarea</h2>
                 <button class="close-btn" onclick="closeModal()">×</button>
             </div>
             <form id="modalForm">
@@ -111,22 +105,22 @@
                 </div>
                 <div class="form-group">
                     <label for="taskDescription">Descripción</label>
-                    <textarea id="taskDescription" name="description"></textarea>
+                    <textarea id="taskDescription" name="description" rows="3" required></textarea>
                 </div>
                 <div class="form-group" id="phaseGroup">
-                    <label for="taskPhase">Fase APQP</label>
-                    <select id="taskPhase" name="phase">
+                    <label for="taskPhase">Fase</label>
+                    <select id="taskPhase" name="phase" required>
                         <option value="0">Backlog</option>
-                        <option value="1">Fase 1: Planificación y Definición</option>
-                        <option value="2">Fase 2: Diseño y Desarrollo del Producto</option>
-                        <option value="3">Fase 3: Diseño y Desarrollo del Proceso</option>
-                        <option value="4">Fase 4: Validación del Producto y Proceso</option>
-                        <option value="5">Fase 5: Lanzamiento y Retroalimentación</option>
+                        <option value="1">Fase 1: Planificación</option>
+                        <option value="2">Fase 2: Diseño del Producto</option>
+                        <option value="3">Fase 3: Diseño del Proceso</option>
+                        <option value="4">Fase 4: Validación</option>
+                        <option value="5">Fase 5: Lanzamiento</option>
                         <option value="6">Completado</option>
                     </select>
                 </div>
                 <div class="form-group">
-                    <label for="taskDueDate">Fecha de Entrega</label>
+                    <label for="taskDueDate">Fecha de Vencimiento</label>
                     <input type="date" id="taskDueDate" name="dueDate">
                 </div>
                 <div class="form-group" id="completedGroup">
