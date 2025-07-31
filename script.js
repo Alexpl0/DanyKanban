@@ -17,7 +17,7 @@ const phases = [
 ];
 
 // ===== VERSION CHECK AND FORCED UPDATE =====
-const APP_VERSION = '1.2.0'; // Incrementa esto cada vez que quieras forzar actualización
+const APP_VERSION = '1.2.1'; // Incrementa esto cada vez que quieras forzar actualización
 const VERSION_KEY = 'kanban_app_version';
 
 function checkAppVersion() {
@@ -46,6 +46,7 @@ function showUpdateModal() {
         align-items: center;
         z-index: 10000;
         backdrop-filter: blur(5px);
+        animation: fadeIn 0.3s ease;
     `;
     
     updateModal.innerHTML = `
@@ -57,6 +58,7 @@ function showUpdateModal() {
             max-width: 400px;
             margin: 20px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            animation: slideUp 0.3s ease;
         ">
             <div style="font-size: 50px; margin-bottom: 20px;">🔄</div>
             <h2 style="color: #1D837F; margin-bottom: 15px;">Nueva Versión Disponible</h2>
@@ -65,6 +67,12 @@ function showUpdateModal() {
                 <br><br>
                 <strong>Es necesario actualizar para continuar.</strong>
             </p>
+            <div id="updateProgress" style="display: none; margin-bottom: 20px;">
+                <div style="background: #f0f0f0; border-radius: 10px; height: 6px; overflow: hidden;">
+                    <div id="progressBar" style="background: #1D837F; height: 100%; width: 0%; transition: width 0.3s ease;"></div>
+                </div>
+                <p style="font-size: 14px; color: #666; margin-top: 10px;" id="progressText">Iniciando actualización...</p>
+            </div>
             <button id="updateBtn" style="
                 background: #1D837F;
                 color: white;
@@ -74,7 +82,7 @@ function showUpdateModal() {
                 font-size: 16px;
                 cursor: pointer;
                 width: 100%;
-                transition: background 0.3s;
+                transition: all 0.3s;
             " onmouseover="this.style.background='#15625f'" onmouseout="this.style.background='#1D837F'">
                 🚀 Actualizar Ahora
             </button>
@@ -84,11 +92,34 @@ function showUpdateModal() {
         </div>
     `;
     
+    // Agregar estilos de animación
+    if (!document.querySelector('#modalAnimations')) {
+        const style = document.createElement('style');
+        style.id = 'modalAnimations';
+        style.textContent = `
+            @keyframes fadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+            }
+            @keyframes slideUp {
+                from { 
+                    transform: translateY(30px);
+                    opacity: 0;
+                }
+                to { 
+                    transform: translateY(0);
+                    opacity: 1;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
     document.body.appendChild(updateModal);
     
     // Manejar click de actualización
     document.getElementById('updateBtn').addEventListener('click', function() {
-        forceAppUpdate();
+        forceAppUpdateWithProgress();
     });
     
     // Prevenir cerrar el modal clickeando fuera
@@ -97,50 +128,192 @@ function showUpdateModal() {
     });
 }
 
-function forceAppUpdate() {
-    // Mostrar loading
+function forceAppUpdateWithProgress() {
     const updateBtn = document.getElementById('updateBtn');
-    updateBtn.innerHTML = '⏳ Actualizando...';
-    updateBtn.disabled = true;
+    const updateProgress = document.getElementById('updateProgress');
+    const progressBar = document.getElementById('progressBar');
+    const progressText = document.getElementById('progressText');
     
-    // Limpiar todo y forzar actualización
+    // Mostrar barra de progreso
+    updateBtn.style.display = 'none';
+    updateProgress.style.display = 'block';
+    
+    // Simular progreso de actualización
+    let progress = 0;
+    const steps = [
+        { progress: 20, text: 'Preparando actualización...' },
+        { progress: 40, text: 'Limpiando caché...' },
+        { progress: 60, text: 'Actualizando datos...' },
+        { progress: 80, text: 'Finalizando...' },
+        { progress: 100, text: '¡Actualización completada!' }
+    ];
+    
+    let currentStep = 0;
+    
+    function updateProgress() {
+        if (currentStep < steps.length) {
+            const step = steps[currentStep];
+            progressBar.style.width = `${step.progress}%`;
+            progressText.textContent = step.text;
+            currentStep++;
+            
+            if (currentStep < steps.length) {
+                setTimeout(updateProgress, 300);
+            } else {
+                // Ejecutar la actualización real después del último paso
+                setTimeout(() => {
+                    executeActualUpdate();
+                }, 500);
+            }
+        }
+    }
+    
+    updateProgress();
+}
+
+function executeActualUpdate() {
+    // Limpiar localStorage pero mantener usuario logueado
+    const currentUserData = localStorage.getItem('kanban_user');
+    
+    // Limpiar todo
+    localStorage.clear();
+    
+    // Restaurar usuario
+    if (currentUserData) {
+        localStorage.setItem('kanban_user', currentUserData);
+    }
+    
+    // Establecer nueva versión
+    localStorage.setItem(VERSION_KEY, APP_VERSION);
+    
+    // Limpiar caché
+    if ('caches' in window) {
+        caches.keys().then(names => {
+            Promise.all(names.map(name => caches.delete(name))).then(() => {
+                handleServiceWorkerUpdate(currentUserData);
+            });
+        });
+    } else {
+        handleServiceWorkerUpdate(currentUserData);
+    }
+}
+
+function handleServiceWorkerUpdate(currentUserData) {
+    // Desregistrar service worker
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(registrations => {
+            Promise.all(registrations.map(registration => registration.unregister())).then(() => {
+                // Después de desregistrar, reinicializar la app sin recargar la página
+                reinitializeApp(currentUserData);
+            });
+        });
+    } else {
+        // Si no hay service worker, reinicializar directamente
+        reinitializeApp(currentUserData);
+    }
+}
+
+function reinitializeApp(currentUserData) {
+    // Ocultar modal de actualización
+    const updateModal = document.getElementById('updateModal');
+    if (updateModal) {
+        updateModal.remove();
+    }
+    
+    // Resetear variables globales
+    currentUser = null;
+    currentProject = null;
+    projects = [];
+    tasks = [];
+    draggedTask = null;
+    
+    // Cargar datos desde storage (que ahora estará vacío excepto por el usuario)
+    loadFromStorage();
+    
+    // Si había usuario logueado, restaurarlo
+    if (currentUserData) {
+        currentUser = JSON.parse(currentUserData);
+    }
+    
+    // Reinicializar datos de ejemplo si no hay proyectos
+    if (projects.length === 0) {
+        initializeSampleData();
+    }
+    
+    // Mostrar la vista apropiada
+    if (currentUser) {
+        showDashboard();
+        // Mostrar mensaje de éxito
+        showUpdateSuccessMessage();
+    } else {
+        showLogin();
+    }
+}
+
+function showUpdateSuccessMessage() {
+    // Crear notificación de éxito
+    const successNotification = document.createElement('div');
+    successNotification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #4CAF50;
+        color: white;
+        padding: 15px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        z-index: 10000;
+        font-weight: 500;
+        animation: slideInRight 0.3s ease;
+    `;
+    
+    successNotification.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <span>✅</span>
+            <span>¡Aplicación actualizada exitosamente!</span>
+        </div>
+    `;
+    
+    // Agregar CSS de animación si no existe
+    if (!document.querySelector('#updateAnimations')) {
+        const style = document.createElement('style');
+        style.id = 'updateAnimations';
+        style.textContent = `
+            @keyframes slideInRight {
+                from {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+            @keyframes slideOutRight {
+                from {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+                to {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    document.body.appendChild(successNotification);
+    
+    // Remover la notificación después de 3 segundos
     setTimeout(() => {
-        // Limpiar localStorage pero mantener usuario logueado
-        const currentUser = localStorage.getItem('kanban_user');
-        
-        // Limpiar todo
-        localStorage.clear();
-        
-        // Restaurar usuario
-        if (currentUser) {
-            localStorage.setItem('kanban_user', currentUser);
-        }
-        
-        // Establecer nueva versión
-        localStorage.setItem(VERSION_KEY, APP_VERSION);
-        
-        // Limpiar caché
-        if ('caches' in window) {
-            caches.keys().then(names => {
-                names.forEach(name => {
-                    caches.delete(name);
-                });
-            });
-        }
-        
-        // Desregistrar service worker y recargar
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.getRegistrations().then(registrations => {
-                registrations.forEach(registration => {
-                    registration.unregister();
-                });
-                // Recargar después de desregistrar
-                window.location.reload(true);
-            });
-        } else {
-            window.location.reload(true);
-        }
-    }, 1500);
+        successNotification.style.animation = 'slideOutRight 0.3s ease';
+        setTimeout(() => {
+            if (successNotification.parentNode) {
+                successNotification.remove();
+            }
+        }, 300);
+    }, 3000);
 }
 
 // ===== INITIALIZATION =====
