@@ -5,6 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kanban APQP - Sistema de Gestión de Proyectos</title>
     <link rel="stylesheet" href="styles.css">
+    
+    <!-- PWA Meta Tags -->
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#1D837F">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Kanban APQP">
+    <link rel="apple-touch-icon" href="./icons/icon-152.png">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="./icons/icon-32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="./icons/icon-16.png">
 </head>
 <body>
     <!-- Login Page  -->
@@ -116,6 +128,13 @@
                 <div class="form-group">
                     <label for="taskDueDate">Fecha de Entrega</label>
                     <input type="date" id="taskDueDate" name="dueDate">
+                </div>
+                <div class="form-group" id="completedGroup">
+                    <label class="checkbox-label" for="taskCompleted">
+                        <input type="checkbox" id="taskCompleted" name="completed">
+                        <span class="checkmark"></span>
+                        Tarea Completada
+                    </label>
                 </div>
                 <div class="modal-actions">
                     <button type="button" class="btn-secondary" onclick="closeModal()">Cancelar</button>
