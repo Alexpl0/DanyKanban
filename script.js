@@ -17,7 +17,7 @@ const phases = [
 ];
 
 // ===== VERSION CHECK AND FORCED UPDATE =====
-const APP_VERSION = '1.3.0'; // Incrementa esto cada vez que quieras forzar actualización
+const APP_VERSION = '1.5.0'; // Incrementa esto cada vez que quieras forzar actualización
 const VERSION_KEY = 'kanban_app_version';
 
 function checkAppVersion() {
@@ -158,7 +158,8 @@ function forceAppUpdateWithProgress() {
     
     let currentStep = 0;
     
-    function updateProgress() {
+    // Cambiar el nombre de la función interna
+    function updateProgressBar() {
         if (currentStep < steps.length) {
             const step = steps[currentStep];
             progressBar.style.width = `${step.progress}%`;
@@ -166,7 +167,7 @@ function forceAppUpdateWithProgress() {
             currentStep++;
             
             if (currentStep < steps.length) {
-                setTimeout(updateProgress, 300);
+                setTimeout(updateProgressBar, 300);
             } else {
                 // Ejecutar la actualización real después del último paso
                 setTimeout(() => {
@@ -176,7 +177,7 @@ function forceAppUpdateWithProgress() {
         }
     }
     
-    updateProgress();
+    updateProgressBar(); // Llamar con el nuevo nombre
 }
 
 function executeActualUpdate() {
@@ -336,6 +337,9 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function initializeApp() {
+    // Setup event listeners PRIMERO
+    setupEventListeners();
+    
     // Check if user is logged in
     const savedUser = localStorage.getItem('kanban_user');
     if (savedUser) {
@@ -349,22 +353,28 @@ function initializeApp() {
     if (projects.length === 0) {
         initializeSampleData();
     }
-
-    // Setup event listeners
-    setupEventListeners();
 }
 
 function setupEventListeners() {
     // Login form
-    document.getElementById('loginForm').addEventListener('submit', handleLogin);
+    const loginForm = document.getElementById('loginForm');
+    if (loginForm) {
+        loginForm.addEventListener('submit', handleLogin);
+    }
     
-    // Modal form
-    document.getElementById('modalForm').addEventListener('submit', handleModalSubmit);
+    // Modal form  
+    const modalForm = document.getElementById('modalForm');
+    if (modalForm) {
+        modalForm.addEventListener('submit', handleModalSubmit);
+    }
     
     // Close modal on background click
-    document.getElementById('modal').addEventListener('click', function(e) {
-        if (e.target === this) closeModal();
-    });
+    const modal = document.getElementById('modal');
+    if (modal) {
+        modal.addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
+        });
+    }
 }
 
 // ===== HELPER FUNCTIONS =====
@@ -409,6 +419,26 @@ function handleLogin(e) {
     }
     
     return false; // Importante: prevenir el submit del form
+}
+
+// ===== DIRECT LOGIN HANDLER (Fallback) =====
+function handleLoginDirect() {
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    
+    console.log('Direct login attempt:', email);
+    
+    if (email && password) {
+        currentUser = {
+            id: 1,
+            name: 'Admin User',
+            email: email,
+            avatar: email.charAt(0).toUpperCase()
+        };
+        
+        localStorage.setItem('kanban_user', JSON.stringify(currentUser));
+        showDashboard();
+    }
 }
 
 function logout() {
